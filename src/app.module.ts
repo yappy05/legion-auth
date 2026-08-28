@@ -34,7 +34,7 @@ const configSchema = z
               return `  • ${path}: ${e.message}`;
             });
             console.error(
-              `Ошибка валидации переменных окружения:\n${errors.join('\n')}\nДанные можно взять из .env.example`,
+              `Ошибка валидации переменных окружения:\n${errors.join('\n')}\nДанные можно взять из .env.dev`,
             );
             process.exit(1);
           }
