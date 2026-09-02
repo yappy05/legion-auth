@@ -9,8 +9,8 @@ datasource db {
 
 model User {
   id           String    @id @default(uuid())
-  login        String    @unique
-  email        String    @unique
+  login        String
+  email        String
   passwordHash String    @map("password_hash")
   age          Int
   about        String

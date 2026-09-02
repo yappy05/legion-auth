@@ -6,17 +6,25 @@ import {
   FindOneResponseDto,
 } from './dto/responses/find-one.response.dto';
 import { ZodResponse } from 'nestjs-zod';
+import { ApiBearerAuth, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { FindAllRequestDto } from './dto/requests/find-all.request.dto';
 import { DeleteResponseDto } from './dto/responses/delete.response.dto';
+import { CurrentUser } from '../common/decorators/user.decorator';
+import { type JwtPayload } from '../auth/auth.service';
+import { z } from 'zod';
+import { JwtPayloadDto } from '../auth/dto/responses/jwt.response.dto';
 
+@ApiBearerAuth()
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @ZodResponse({ type: FindOneResponseDto })
   @Get('profile/me')
-  public async findOne(@Req() req: Request): Promise<FindOneResponse> {
-    const userProfile = await this.userService.findOne(req.user.sub);
+  public async findOne(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<FindOneResponse> {
+    const userProfile = await this.userService.findOne(user.sub);
     return userProfile;
   }
 
@@ -30,8 +38,16 @@ export class UserController {
 
   @Delete()
   @ZodResponse({ type: DeleteResponseDto })
-  public async delete(@Req() req: Request) {
-    const id = req.user.sub;
+  public async delete(@CurrentUser() user: JwtPayload) {
+    const id = user.sub;
     return this.userService.delete(id);
+  }
+
+  @ApiExcludeEndpoint()
+  @ApiBearerAuth()
+  @ZodResponse({ type: JwtPayloadDto })
+  @Get('check')
+  public checkDec(@CurrentUser() user: JwtPayload) {
+    return user;
   }
 }

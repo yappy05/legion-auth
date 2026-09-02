@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/infra/prisma/prisma.service';
-import { RegisterRequestDto } from '../auth/dto/requests';
+import { RegisterRequest, RegisterRequestDto } from '../auth/dto/requests';
 import { User } from '../../prisma/generated/client';
 import * as argon2 from 'argon2';
 import { UserWhereInput } from '../../prisma/generated/models/User';
@@ -10,9 +10,8 @@ import { FindAllRequest } from './dto/requests/find-all.request.dto';
 export class UserRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  public async create(dto: RegisterRequestDto) {
-    const { login, email, password, age, about } = dto;
-    const passwordHash = await argon2.hash(password);
+  public async create(dto: RegisterRequest) {
+    const { login, email, password: passwordHash, age, about } = dto;
     const user = await this.prismaService.user.create({
       data: {
         login,
@@ -27,22 +26,22 @@ export class UserRepository {
 
   public async findOne(id: string): Promise<User | null> {
     return this.prismaService.user.findUnique({
-      where: { id, deletedAt: null },
+      where: { id },
     });
   }
   public async findOneByEmail(email: string): Promise<User | null> {
-    return this.prismaService.user.findUnique({
-      where: { email, deletedAt: null },
+    return this.prismaService.user.findFirst({
+      where: { email },
     });
   }
   public async findOneByLogin(login: string): Promise<User | null> {
-    return this.prismaService.user.findUnique({
-      where: { login, deletedAt: null },
+    return this.prismaService.user.findFirst({
+      where: { login },
     });
   }
   public async findAll(pagination: FindAllRequest): Promise<User[] | null> {
     const { limit, offset, login } = pagination;
-    const where: UserWhereInput = { deletedAt: null };
+    const where: UserWhereInput = {};
     if (login) where.login = { contains: login, mode: 'insensitive' };
     return this.prismaService.user.findMany({
       skip: offset,
@@ -52,9 +51,9 @@ export class UserRepository {
   }
 
   public async delete(id: string) {
-    await this.prismaService.user.update({
+    // расширение превращает delete в мягкое удаление (update deletedAt = now)
+    await this.prismaService.user.delete({
       where: { id },
-      data: { deletedAt: new Date(Date.now()) },
     });
     return { success: true };
   }

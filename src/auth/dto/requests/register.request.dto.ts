@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
 
-
 export const RegisterRequestSchema = z
   .object({
     login: z
@@ -18,3 +17,4 @@ export const RegisterRequestSchema = z
 
 // export type RegisterRequestDto = z.infer<typeof RegisterRequestSchema>;
 export class RegisterRequestDto extends createZodDto(RegisterRequestSchema) {}
+export type RegisterRequest = z.infer<typeof RegisterRequestSchema>;

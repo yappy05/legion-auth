@@ -23,7 +23,7 @@ export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly userService: UserService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
   ) {}
 
   public async register(dto: RegisterRequestDto): Promise<JwtResponse> {
@@ -56,15 +56,18 @@ export class AuthService {
   }
 
   private async generateTokens(id: string): Promise<JwtResponse> {
-    const accessToken = await this.jwtService.signAsync({ sub: id });
-    const refreshToken = await this.jwtService.signAsync(
-      { sub: id },
-      {
-        expiresIn: this.configService.getOrThrow<StringValue>(
-          'JWT_REFRESH_EXPIRES_IN',
-        ),
-      },
-    );
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync({ sub: id }),
+      this.jwtService.signAsync(
+        { sub: id },
+        {
+          expiresIn: this.configService.getOrThrow<StringValue>(
+            'JWT_REFRESH_EXPIRES_IN',
+          ),
+        },
+      ),
+    ]);
+
     return { accessToken, refreshToken };
   }
 }

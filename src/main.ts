@@ -14,6 +14,7 @@ async function bootstrap() {
       .setVersion('1.0.0')
       .addTag('auth')
       .addTag('users')
+      .addBearerAuth()
       .build(),
   );
   SwaggerModule.setup('api', app, cleanupOpenApiDoc(openApiDoc));

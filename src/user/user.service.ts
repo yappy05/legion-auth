@@ -5,19 +5,24 @@ import {
 } from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import { RegisterRequestDto } from '../auth/dto/requests';
-import {
-  FindOneResponse,
-} from './dto/responses/find-one.response.dto';
+import { FindOneResponse } from './dto/responses/find-one.response.dto';
 import { User } from '../../prisma/generated/client';
 import { FindAllRequest } from './dto/requests/find-all.request.dto';
+import * as argon2 from 'argon2';
 
 @Injectable()
 export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
   public async create(dto: RegisterRequestDto) {
-    const isExist = await this.userRepository.findOneByEmail(dto.email);
-    if (isExist) throw new ConflictException();
-    return this.userRepository.create(dto);
+    const [isExistEmail, isExistLogin] = await Promise.all([
+      this.userRepository.findOneByEmail(dto.email),
+      this.userRepository.findOneByLogin(dto.login),
+    ]);
+
+    if (isExistEmail || isExistLogin) throw new ConflictException();
+
+    const passwordHash = await argon2.hash(dto.password);
+    return this.userRepository.create({ ...dto, password: passwordHash });
   }
   public async findOne(id: string): Promise<FindOneResponse> {
     const user = await this.userRepository.findOne(id);
