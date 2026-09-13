@@ -1,6 +1,6 @@
-import { BadRequestException, Module } from '@nestjs/common';
-import { UserModule } from './user/user.module';
-import { AuthModule } from './auth/auth.module';
+import { Module } from '@nestjs/common';
+import { UserModule } from './modules/user/user.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { InfraModule } from './common/infra/infra.module';
 import { ConfigModule } from '@nestjs/config';
 import { JwtGuard } from './common/guards/jwt.guard';
@@ -8,6 +8,10 @@ import { CustomZodSerializerInterceptor } from './common/interceptors/zod-serial
 import { CustomZodValidationPipe } from './common/pipes/zod-validation.pipe';
 import { HttpExceptionFilter } from './common/filters/zod.filter';
 import { z } from 'zod';
+import { AvatarsModule } from './modules/avatars/avatars.module';
+import { BalanceModule } from './modules/balance/balance.module';
+import { LoggerInterceptor } from './common/interceptors/logger.interceptor';
+import { BullModule } from '@nestjs/bullmq';
 
 const configSchema = z
   .object({
@@ -42,9 +46,18 @@ const configSchema = z
         }
       },
     }),
+    BullModule.forRoot({
+      connection: {
+        host: 'localhost',
+        port: 6379,
+        password: 'redis',
+      },
+    }),
     AuthModule,
     UserModule,
     InfraModule,
+    AvatarsModule,
+    BalanceModule,
   ],
   providers: [
     {
@@ -58,6 +71,10 @@ const configSchema = z
     {
       provide: 'APP_INTERCEPTOR',
       useClass: CustomZodSerializerInterceptor,
+    },
+    {
+      provide: 'APP_INTERCEPTOR',
+      useClass: LoggerInterceptor,
     },
     {
       provide: 'APP_FILTER',

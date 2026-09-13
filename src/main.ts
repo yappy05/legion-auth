@@ -24,6 +24,10 @@ async function bootstrap() {
   );
   SwaggerModule.setup('api', app, cleanupOpenApiDoc(openApiDoc));
 
-  await app.listen(process.env.PORT ?? 8000);
+  await app.listen(process.env.PORT ?? 8000, () =>
+    console.log(
+      `приложение запущено на http://localhost:8000\nswagger: http://localhost:8000/api`,
+    ),
+  );
 }
 bootstrap();
