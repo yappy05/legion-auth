@@ -4,7 +4,7 @@ import { PrismaClient } from '../../../../prisma/generated/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { softDeleteExtension } from './soft-delete.extension';
 
-const SOFT_DELETE_MODELS = ['User'] as const;
+const SOFT_DELETE_MODELS = ['User', 'Avatar'] as const;
 
 @Injectable()
 export class PrismaService extends PrismaClient {

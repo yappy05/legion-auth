@@ -1,7 +1,24 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { PrismaClient } from '../../../../prisma/generated/client';
 
-type HookParams = { model: string; operation: string; args: any; query: (args: any) => Promise<any> };
+type HookArgs = {
+  where?: Record<string, unknown>;
+  [key: string]: unknown;
+};
+
+type HookParams = {
+  model: string;
+  operation: string;
+  args: HookArgs;
+  query: (args: HookArgs) => Promise<unknown>;
+};
+
+type SoftDeleteDelegate = {
+  update(args: { where: unknown; data: { deletedAt: Date } }): Promise<unknown>;
+  updateMany(args: {
+    where: unknown;
+    data: { deletedAt: Date };
+  }): Promise<unknown>;
+};
 
 /**
  * Мягкое удаление для моделей из реестра (по умолчанию поле deletedAt).
@@ -19,7 +36,10 @@ type HookParams = { model: string; operation: string; args: any; query: (args: a
  *
  * base — НЕрасширенный клиент: вызовы внутри хуков идут через него, без рекурсии.
  */
-export function softDeleteExtension(base: PrismaClient, models: string[] = ['User']) {
+export function softDeleteExtension(
+  base: PrismaClient,
+  models: string[] = ['User'],
+) {
   const softModels = new Set(models);
 
   const readOps = new Set([
@@ -39,8 +59,10 @@ export function softDeleteExtension(base: PrismaClient, models: string[] = ['Use
         async $allOperations({ model, operation, args, query }: HookParams) {
           if (!softModels.has(model)) return query(args);
 
-          const delegate = (base as any)[model[0].toLowerCase() + model.slice(1)];
-          const whereHasField = args?.where && args.where.deletedAt !== undefined;
+          const delegate = (
+            base as unknown as Record<string, SoftDeleteDelegate>
+          )[model[0].toLowerCase() + model.slice(1)];
+          const whereHasField = args?.where?.deletedAt !== undefined;
 
           // мягкое удаление одной записи
           if (operation === 'delete') {
